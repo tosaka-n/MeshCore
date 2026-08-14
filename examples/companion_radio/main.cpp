@@ -251,6 +251,7 @@ void loop() {
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
+  handleUserButtonEvent();  // Check for button events (e.g., long-press -> deep sleep)
   rtc_clock.tick();
 #ifdef HAS_EXTERNAL_WATCHDOG
   external_watchdog.loop();
@@ -271,4 +272,10 @@ void loop() {
     last_wifi_reconnect_attempt = millis();
   }
 #endif
+}
+
+// Default weak implementation for button event handler
+// Allows board-specific implementations (e.g., xiao_s3_wio) to override
+void handleUserButtonEvent() __attribute__((weak)) {
+  // Default: do nothing (button event handling not required for this board)
 }

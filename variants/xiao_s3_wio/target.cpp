@@ -40,3 +40,47 @@ mesh::LocalIdentity radio_new_identity() {
   return mesh::LocalIdentity(&rng);  // create new random identity
 }
 
+// Override powerOff to add GPIO wakeup support
+void XiaoS3WIOBoard::powerOff() {
+  // Power off the display if any
+#ifdef DISPLAY_CLASS
+  display.turnOff();
+#endif
+
+  // Power off LoRa
+  radio_driver.powerOff();
+
+  // Keep LoRa inactive during deepsleep
+  digitalWrite(P_LORA_NSS, HIGH);
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
+  gpio_hold_en((gpio_num_t)P_LORA_NSS);
+#else
+  rtc_gpio_hold_en((gpio_num_t)P_LORA_NSS);
+#endif
+
+  // Power off GPS if any
+  if (sensors.getLocationProvider() != NULL) {
+    sensors.getLocationProvider()->stop();
+  }
+
+  // Flush serial buffers
+  Serial.flush();
+  delay(100);
+
+  // Clear stale wakeup sources to avoid ghost wakeup
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+
+  // Configure GPIO wakeup for button recovery
+#ifdef PIN_USER_BTN
+  esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+  rtc_gpio_set_direction((gpio_num_t)PIN_USER_BTN, RTC_GPIO_MODE_INPUT_ONLY);
+  rtc_gpio_pullup_en((gpio_num_t)PIN_USER_BTN);
+  esp_sleep_enable_ext1_wakeup(
+    (1ULL << P_LORA_DIO_1) | (1ULL << PIN_USER_BTN),
+    ESP_EXT1_WAKEUP_ANY_HIGH
+  );
+#endif
+
+  // Finally set ESP32 into deepsleep
+  esp_deep_sleep_start();
+}

@@ -24,8 +24,10 @@ EnvironmentSensorManager sensors;
 bool radio_init() {
   fallback_clock.begin();
   rtc_clock.begin(Wire);
-  pinMode(21, INPUT);
-  pinMode(48, OUTPUT);
+#ifdef PIN_USER_BTN
+  pinMode(PIN_USER_BTN, INPUT);
+#endif
+  pinMode(PIN_STATUS_LED, OUTPUT);
 
   #if defined(P_LORA_SCLK)
   spi.begin(P_LORA_SCLK, P_LORA_MISO, P_LORA_MOSI);
@@ -75,10 +77,7 @@ void XiaoS3WIOBoard::powerOff() {
   esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
   rtc_gpio_set_direction((gpio_num_t)PIN_USER_BTN, RTC_GPIO_MODE_INPUT_ONLY);
   rtc_gpio_pullup_en((gpio_num_t)PIN_USER_BTN);
-  esp_sleep_enable_ext1_wakeup(
-    (1ULL << P_LORA_DIO_1) | (1ULL << PIN_USER_BTN),
-    ESP_EXT1_WAKEUP_ANY_HIGH
-  );
+  esp_sleep_enable_ext1_wakeup((1ULL << P_LORA_DIO_1), ESP_EXT1_WAKEUP_ANY_HIGH);
 #endif
 
   // Finally set ESP32 into deepsleep

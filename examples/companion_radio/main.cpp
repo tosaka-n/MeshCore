@@ -248,6 +248,9 @@ void loop() {
   the_mesh.loop();
   interface_manager.loop();
   sensors.loop();
+#ifdef ENABLE_USER_POWER_BUTTON
+  handleUserPowerButtonEvent();
+#endif
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif

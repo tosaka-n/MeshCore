@@ -7,11 +7,15 @@
 #include <helpers/radiolib/CustomSX1262Wrapper.h>
 #include <helpers/AutoDiscoverRTCClock.h>
 #include <helpers/sensors/EnvironmentSensorManager.h>
-#ifdef PIN_USER_BTN
+#if defined(PIN_USER_BTN)
   #include <helpers/ui/MomentaryButton.h>
 #endif
 #ifdef DISPLAY_CLASS
-  #include <helpers/ui/SSD1306Display.h>
+  #ifdef USE_NULL_DISPLAY
+    #include <helpers/ui/NullDisplayDriver.h>
+  #else
+    #include <helpers/ui/SSD1306Display.h>
+  #endif
 #endif
 #include "XiaoS3WIOBoard.h"
 
@@ -20,8 +24,7 @@ extern WRAPPER_CLASS radio_driver;
 extern AutoDiscoverRTCClock rtc_clock;
 extern EnvironmentSensorManager sensors;
 
-// Button is available for deep sleep wakeup and control
-#ifdef PIN_USER_BTN
+#if defined(PIN_USER_BTN)
   extern MomentaryButton user_btn;
 #endif
 
@@ -31,5 +34,6 @@ extern EnvironmentSensorManager sensors;
 
 bool radio_init();
 mesh::LocalIdentity radio_new_identity();
-void handleUserButtonEvent();
-
+#ifdef ENABLE_USER_POWER_BUTTON
+void handleUserPowerButtonEvent();
+#endif
